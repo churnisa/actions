@@ -1,0 +1,27 @@
+name: Sync to Pitches Repo
+
+description: After producing html files from markdown document using quarto, pubish them to public repo.
+
+inputs:
+  repo-name:
+    description: "The name of the Pitches repository to sync with"
+    required: true
+  github-username:
+    description: "GitHub username/organization of pitches repo"
+    required: true
+  ssh-private-key:
+    description: "SSH private key for GitHub Actions authentication"
+    required: true
+  
+
+runs:
+  using: "composite"
+  steps:
+    - name: Sync and push to Pitches repo
+      run: |
+        bash ${{ github.action_path }}/entrypoint.sh
+      shell: bash
+      env:
+        INPUT_REPO_NAME: ${{ inputs.repo-name }}
+        INPUT_GITHUB_USERNAME: ${{ inputs.github-username }}
+        INPUT_SSH_PRIVATE_KEY: ${{ inputs.ssh-private-key }}
