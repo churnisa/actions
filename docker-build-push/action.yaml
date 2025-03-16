@@ -60,7 +60,7 @@ runs:
       id: parse-build-args
       shell: bash
       run: |
-        echo "::set-output name=build_args::$(echo '${{ inputs.build-args }}' | jq -r 'to_entries | map("--build-arg \(.key)=\(.value)") | join(" ")')"
+        echo "build_args=$(echo '${{ inputs.build-args }}' | jq -r 'to_entries | map("--build-arg \(.key)=\(.value)") | join(" ")')" >> $GITHUB_OUTPUT
         
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
