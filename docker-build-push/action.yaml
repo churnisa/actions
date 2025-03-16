@@ -1,0 +1,73 @@
+name: Docker Build and Push
+description: Build a Docker image and push it to GitHub Container Registry upon merge to master
+
+inputs:
+  image-name:
+    description: "Name of the Docker image (without registry prefix)"
+    required: true
+  dockerfile-path:
+    description: "Path to the Dockerfile"
+    required: false
+    default: "./Dockerfile"
+  build-context:
+    description: "Docker build context"
+    required: false
+    default: "."
+  registry:
+    description: "Container registry URL"
+    required: false
+    default: "ghcr.io"
+  registry-username:
+    description: "Username for registry authentication"
+    required: false
+    default: "${{ github.actor }}"
+  registry-password:
+    description: "Password for registry authentication"
+    required: false
+    default: "${{ github.token }}"
+  tags:
+    description: "Tags for the Docker image (comma-separated)"
+    required: false
+    default: "latest"
+  build-args:
+    description: "Build arguments for Docker build (JSON format)"
+    required: false
+    default: "{}"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-username }}
+        password: ${{ inputs.registry-password }}
+        
+    - name: Extract metadata for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
+        tags: |
+          type=raw,value=${{ inputs.tags }}
+          type=sha,format=short
+          
+    - name: Parse build args
+      id: parse-build-args
+      shell: bash
+      run: |
+        echo "::set-output name=build_args::$(echo '${{ inputs.build-args }}' | jq -r 'to_entries | map("--build-arg \(.key)=\(.value)") | join(" ")')"
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ inputs.build-context }}
+        file: ${{ inputs.dockerfile-path }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: ${{ steps.parse-build-args.outputs.build_args }}

@@ -1,0 +1,27 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    # Only push to registry on merge to master/main, not on PRs
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build and push Docker image
+        uses: churnisa/actions/docker-build-push@master
+        with:
+          image-name: my-service
+          tags: 'latest,${{ github.sha }}'
+          build-args: '{"NODE_ENV": "production"}'
