@@ -67,7 +67,7 @@ function updateLessonsJson(lessonsInfo) {
   for (const info of lessonsInfo) {
     const lesson = lessons.find(l => 
       l.year === info.year && 
-      l.quarter.toLowerCase() === info.quarter.toLowerCase()
+      l.quarter.toLowerCase().includes(info.quarter.toLowerCase())
     );
 
     if (lesson) {
