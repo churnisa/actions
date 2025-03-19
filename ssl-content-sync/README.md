@@ -43,8 +43,10 @@ The action expects a directory structure like this:
 name: Content Sync and Update
 
 on:
-  push:
-    branches: [upload]
+  workflow_dispatch:
+  schedule:
+    # Midnight(UTC+3)
+    - cron: '0 21 * * *' 
 
 jobs:
   sync-and-update:
