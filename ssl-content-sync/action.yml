@@ -1,0 +1,41 @@
+name: 'SSL Content Sync and Update'
+description: 'Synchronizes content from upload to master branch and updates lessons.json with language information'
+author: 'GitHub Actions Bot'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+
+    - name: Store Upload Branch Content
+      shell: bash
+      run: |
+        mkdir -p /tmp/upload-content
+        rsync -av --exclude=".git" --exclude=".github" ./ /tmp/upload-content/
+
+    - name: Checkout Master Branch
+      shell: bash
+      run: |
+        git fetch origin master
+        git checkout master
+
+    - name: Sync Content from Upload Branch
+      shell: bash
+      run: |
+        rsync -av --exclude=".git" --exclude=".github" /tmp/upload-content/ ./
+
+    - name: Update lessons.json
+      shell: bash
+      run: |
+        node ${{ github.action_path }}/update-lessons-json.js
+
+    - name: Commit and Push Changes
+      shell: bash
+      run: |
+        git add .
+        git commit -m "Sync content from upload branch and update lessons.json" || echo "No changes to commit"
+        git push origin master
